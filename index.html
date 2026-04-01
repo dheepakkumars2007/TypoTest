@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Typing Test</title>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .app {
+            width: 650px;
+            background: #111827;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .sentence-box {
+            background: #1f2937;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 110px;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            resize: none;
+            background: #020617;
+            color: white;
+            border: none;
+            outline: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #1f2937;
+            border-radius: 10px;
+        }
+
+        #progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #38bdf8, #22c55e);
+        }
+
+        button {
+            padding: 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .start {
+            background: #22c55e;
+            color: white;
+        }
+
+        .reset {
+            background: #ef4444;
+            color: white;
+        }
+
+        .correct {
+            color: #22c55e;
+        }
+
+        .wrong {
+            color: #ef4444;
+        }
+    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <div class="header">
+            <h1>⌨️ Typing Test</h1>
+            <p>Improve your speed and accuracy</p>
+        </div>
+
+        <div id="sentence" class="sentence-box"></div>
+
+        <textarea id="input" placeholder="Click Start and begin typing..." disabled></textarea>
+
+        <div class="stats">
+            <div class="stat">
+                <span>⏱</span>
+                <p id="time">0s</p>
+                <small>Time</small>
+            </div>
+
+            <div class="stat">
+                <span>⚡</span>
+                <p id="wpm">0</p>
+                <small>WPM</small>
+            </div>
+
+            <div class="stat">
+                <span>🎯</span>
+                <p id="accuracy">0%</p>
+                <small>Accuracy</small>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div id="progress"></div>
+        </div>
+
+        <br>
+
+        <center>
+            <div class="controls">
+                <button class="start" onclick="startTest()">Start</button>
+                <button class="reset" onclick="resetTest()">Reset</button>
+            </div>
+        </center>
+
+    </div>
+
+    <script>
+
+        const sentences = [
+            "Practice makes a person perfect",
+            "Java programming is powerful and versatile",
+            "Coding improves logical thinking",
+            "Technology changes the world rapidly",
+            "Consistency is the key to success"
+        ];
+
+        let startTime = null;
+        let currentSentence = "";
+
+        // Start Test
+        function startTest() {
+
+            currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
+
+            const sentenceDiv = document.getElementById("sentence");
+            sentenceDiv.innerHTML = currentSentence.split("")
+                .map(c => `<span>${c}</span>`).join("");
+
+            const inputField = document.getElementById("input");
+            inputField.disabled = false;
+            inputField.value = "";
+            inputField.focus();
+
+            document.getElementById("wpm").innerText = 0;
+            document.getElementById("accuracy").innerText = 0;
+            document.getElementById("time").innerText = "0s";
+            document.getElementById("progress").style.width = "0%";
+
+            startTime = new Date().getTime();
+        }
+
+        // Typing Event
+        document.getElementById("input").addEventListener("input", function () {
+
+            if (!startTime) return;
+
+            let input = this.value;
+
+            // Prevent extra typing
+            if (input.length > currentSentence.length) {
+                this.value = input.substring(0, currentSentence.length);
+                input = this.value;
+            }
+
+            const spans = document.querySelectorAll("#sentence span");
+
+            let correct = 0;
+
+            spans.forEach((char, index) => {
+                const typed = input[index];
+
+                if (typed === char.innerText) {
+                    char.classList.add("correct");
+                    char.classList.remove("wrong");
+                    correct++;
+                } else if (typed == null) {
+                    char.classList.remove("correct", "wrong");
+                } else {
+                    char.classList.add("wrong");
+                    char.classList.remove("correct");
+                }
+            });
+
+            let time = (new Date().getTime() - startTime) / 1000;
+            if (time <= 0) time = 1;
+
+            let wpm = Math.round((input.length / 5 / time) * 60);
+            let accuracy = Math.round((correct / currentSentence.length) * 100);
+            let progress = (input.length / currentSentence.length) * 100;
+
+            document.getElementById("wpm").innerText = wpm;
+            document.getElementById("accuracy").innerText = accuracy;
+            document.getElementById("progress").style.width = progress + "%";
+            document.getElementById("time").innerText = Math.floor(time) + "s";
+
+            // End Test
+            if (input === currentSentence) {
+                endTest(time, wpm, accuracy);
+            }
+        });
+
+        // End Test
+        function endTest(time, wpm, accuracy) {
+
+            const inputField = document.getElementById("input");
+
+            inputField.disabled = true;
+            startTime = null;
+
+            setTimeout(() => {
+                alert(
+                    "✅ Test Completed!\n\n" +
+                    "⏱ Time: " + Math.floor(time) + "s\n" +
+                    "⚡ WPM: " + wpm + "\n" +
+                    "🎯 Accuracy: " + accuracy + "%"
+                );
+            }, 100);
+        }
+
+        // Reset
+        function resetTest() {
+            location.reload();
+        }
+
+    </script>
+
+</body>
+
+</html>
+
+<!--
+PROJECT TITLE: Typing Speed Testing System
+
+DESCRIPTION:
+This project is developed using HTML, CSS, and JavaScript.
+It provides a typing test interface where users can measure
+their typing speed and accuracy in real-time.
+
+FEATURES:
+- Typing speed calculation (WPM)
+- Accuracy measurement
+- Error detection
+- Real-time typing feedback
+- Progress tracking
+
+TECHNOLOGIES USED:
+- HTML, CSS , JavaScript (User Interface)
+- Java (Core Logic)
+
+TESTING CONCEPTS USED:
+- Input Validation
+- Performance Testing
+- Accuracy Testing
+
+CONCLUSION:
+This system helps evaluate typing performance and demonstrates
+frontend development and testing concepts.
+-->
